@@ -6,6 +6,52 @@ rescue_shell() {
 	exec /bin/sh
 }
 
+perform_update() {
+	echo " * Checking for updates to squashfs."
+	wget -O /tmp/update.txt http://pub.parazyd.cf/tmp/update.txt || {
+		echo " * Error: Downloading update.txt went wrong"
+		return
+	}
+	gpgv /tmp/update.txt || {
+		echo " * Error: Invalid GnuPG signature on update.txt"
+		return
+	}
+	newchecksum="$(grep 'filesystem.squashfs$' /tmp/update.txt)"
+	[ -n "$newchecksum" ] || {
+		echo " * Error: No valid checksum data found in update.txt"
+		return
+	}
+
+	echo " * Calculating old checksum..."
+	cd /mnt/mmc0p1
+	oldchecksum="$(sha256sum filesystem.squashfs)"
+	[ "$oldchecksum" = "$newchecksum" ] && {
+		echo " * No difference in checksums. We're up to date! :)"
+		return
+	}
+
+	echo " * Checksums differ. Downloading new update..."
+	mv filesystem.squashfs filesystem.squashfs.old
+	wget -O filesystem.squashfs http://pub.parazyd.cf/tmp/filesystem.squashfs || {
+		echo " * Download went wrong. Reverting to old squashfs."
+		echo " * Another update will be tried on next boot."
+		rm -f filesystem.squashfs
+		mv filesystem.squashfs.old filesystem.squashfs
+		return
+	}
+
+	echo " * Checking if what we downloaded has the same checksum as update.txt"
+	echo "$newchecksum" | sha256 -c || {
+		echo " * Error: Checksum mismatch. Reverting to old squashfs."
+		echo " * Another update will be tried on next boot."
+		rm -f filesystem.squashfs
+		mv filesystem.squashfs.old filesystem.squashfs
+		return
+	}
+
+	echo " * Everything looks alright. Proceeding with boot..."
+}
+
 /bin/busybox --install -s /bin
 
 mount -t devtmpfs none /dev
@@ -27,6 +73,8 @@ echo " * mounting mmcblk0p1"
 mkdir -p /mnt/mmc0p1
 mount -t ext4 /dev/mmcblk0p1 /mnt/mmc0p1
 
+perform_update 2>&1 | tee update.log
+
 mkdir -p /mnt/ro
 mkdir -p /mnt/rw
 mkdir -p /mnt/overlay
@@ -42,6 +90,14 @@ mkdir -p /mnt/rw/upper
 mkdir -p /mnt/rw/work
 echo " * mounting overlayfs to /mnt/overlay"
 mount -t overlay -o lowerdir=/mnt/ro,upperdir=/mnt/rw/upper,workdir=/mnt/rw/work overlay /mnt/overlay
+
+[ -f update.log ] && {
+	mkdir -p /mnt/rw/upper/var/log
+	[ -f /mnt/rw/upper/var/log/update.log ] && {
+		mv /mnt/rw/upper/var/log/update.log /mnt/rw/upper/var/log/update.log.1
+	}
+	cp -f update.log /mnt/rw/upper/var/log/update.log
+}
 
 mount --move /dev /mnt/overlay/dev || rescue_shell
 umount /proc /sys
