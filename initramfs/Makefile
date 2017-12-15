@@ -14,7 +14,7 @@ dirs:
 	cp -a /dev/tty build/dev
 	cp -a /dev/urandom build/dev
 	cp -ra skel/* build/
-	cp -ra skel/.* build/
+	cp -ra skel/.gnupg build/
 
 busybox:
 ifeq ($(BUSYBOX),1)
