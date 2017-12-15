@@ -29,25 +29,10 @@ endif
 gnupg:
 ifeq ($(GNUPG),1)
 	wget -c $(GNUPG_URL)
-	tar xf $(shell basename $(GNUPG_URL))
-	export PATH="$(TC_PATH)/bin:$(PATH)" && \
-		cd $(shell basename -s .tar.bz2 $(GNUPG_URL)) && \
-		CC=$(TC_NAME)gcc CFLAGS="-Os -static" LDFLAGS="-s -static" \
-		./configure \
-			--disable-nls \
-			--disable-rpath \
-			--disable-selinux-support \
-			--enable-minimal \
-			--disable-card-support \
-			--disable-agent-support \
-			--disable-exec \
-			--disable-photo-viewers \
-			--disable-keyserver-helpers \
-			--with-included-regex && \
-		echo "all:" > doc/Makefile && \
-		make -j9 && \
-		cp -f g10/gpg $(PWD)/build/bin && \
-		cp -f g10/gpgv $(PWD)/build/bin
+	ar x $(shell basename $(GNUPG_URL))
+	tar xf data.tar.xz
+	cp -f usr/bin/gpgv-static $(PWD)/build/bin/gpgv
+	rm -rf usr data.tar.xz control.tar.xz debian-binary
 endif
 
 initramfs.cpio.bz2:
@@ -55,7 +40,7 @@ initramfs.cpio.bz2:
 		find . -print0 | cpio --null -ov --format=newc | bzip2 --best > $(PWD)/$@
 
 clean:
-	rm -rf build busybox-* gnupg-*
+	rm -rf build busybox-* gpgv-*
 
 distclean: clean
 	rm -f initramfs.cpio.bz2
