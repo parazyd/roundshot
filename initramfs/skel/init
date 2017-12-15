@@ -23,6 +23,7 @@ sleep 2
 echo " * setting time from ntp"
 ntpd -q -p pool.ntp.org || rescue_shell
 
+echo " * mounting mmcblk0p1"
 mkdir -p /mnt/mmc0p1
 mount -t ext4 /dev/mmcblk0p1 /mnt/mmc0p1
 
@@ -30,15 +31,19 @@ mkdir -p /mnt/ro
 mkdir -p /mnt/rw
 mkdir -p /mnt/overlay
 
+echo " * mounting squashfs to /mnt/ro"
 mount -t squashfs /mnt/mmc0p1/filesystem.squashfs /mnt/ro
 
 storage=$(egrep -o 'storage[^ ]*' /proc/cmdline | sed 's/storage=//')
+echo " * mounting $storage to /mnt/rw"
 mount -t btrfs $storage /mnt/rw
 
 mkdir -p /mnt/rw/upper
 mkdir -p /mnt/rw/work
+echo " * mounting overlayfs to /mnt/overlay"
 mount -t overlay -o lowerdir=/mnt/ro,upperdir=/mnt/rw/upper,workdir=/mnt/rw/work overlay /mnt/overlay
 
-mount --move /dev /mnt/overlay/dev
+mount --move /dev /mnt/overlay/dev || rescue_shell
 umount /proc /sys
+echo " * switching root"
 exec switch_root /mnt/overlay /sbin/init
