@@ -24,7 +24,7 @@ echo " * setting time from ntp"
 ntpd -q -p pool.ntp.org || rescue_shell
 
 mkdir -p /mnt/mmc0p1
-mount -t btrfs /dev/mmcblk0p1 /mnt/mmc0p1
+mount -t ext4 /dev/mmcblk0p1 /mnt/mmc0p1
 
 mkdir -p /mnt/ro
 mkdir -p /mnt/rw
