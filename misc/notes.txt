@@ -1,0 +1,2 @@
+mkimage -A arm -T ramdisk -C none -n uInitrd -d initramfs.cpio.bz2 initramfs.cpio.bz2.img
+mkimage -A arm -T script -C none -d boot.txt boot.scr
