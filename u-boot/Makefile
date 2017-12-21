@@ -3,7 +3,7 @@
 
 include config.mk
 
-all: u-boot
+all: u-boot build-uboot install
 
 u-boot:
 	git clone $(U_BOOT_URL) -b $(U_BOOT_VERSION) $@

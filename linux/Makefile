@@ -15,6 +15,7 @@ build-$(LINUX_TYPE):
 	cp -f $(LINUX_TYPE).config linux-$(LINUX_TYPE)/.config
 	@export PATH="$(TC_PATH)/bin:$(PATH)" && \
 		cd linux-$(LINUX_TYPE) && \
+		git pull && \
 		make ARCH=arm CROSS_COMPILE=$(TC_NAME) oldconfig && \
 		make ARCH=arm CROSS_COMPILE=$(TC_NAME) -j9 zImage dtbs modules && \
 		make ARCH=arm CROSS_COMPILE=$(TC_NAME) INSTALL_MOD_PATH=$(PWD)/build \
