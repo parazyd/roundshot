@@ -29,3 +29,6 @@ distclean:
 	make -C linux     distclean
 	make -C squashfs  distclean
 	make -C u-boot    distclean
+
+mrproper: clean distclean
+	rm -rf dist
