@@ -7,12 +7,13 @@ all: filesystem.squashfs
 
 filesystem.squashfs:
 	wget -c $(ROOTFS_URL)
-	tar xf $(shell basename $(ROOTFS_URL))
-	cp -frav overlay/* $(shell basename -s .tar.gz $(ROOTFS_URL))
-	mksquashfs $(shell basename -s .tar.gz $(ROOTFS_URL)) $@ -comp xz
+	mkdir -p rootfs
+	cd rootfs && tar xf ../$(shell basename $(ROOTFS_URL))
+	cp -frav overlay/* rootfs
+	mksquashfs rootfs $@ -comp xz
 
 clean:
-	rm -rf $(shell basename $(ROOTFS_URL)) $(shell basename -s .tar.gz $(ROOTFS_URL))
+	rm -rf rootfs $(shell basename -s .tar.gz $(ROOTFS_URL))
 
 distclean: clean
 	rm -f filesystem.squashfs
